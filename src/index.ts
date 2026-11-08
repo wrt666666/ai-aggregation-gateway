@@ -63,7 +63,8 @@ export const router = new ChannelRouter(defaultChannels);
 const authMiddleware = async (c: Context, next: () => Promise<void>) => {
   if (GATEWAY_API_KEY) {
     const authHeader = c.req.header('Authorization') || c.req.header('x-api-key');
-    const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+    const queryToken = c.req.query('token') || c.req.query('key');
+    const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : (queryToken || '');
 
     if (!token || (token !== GATEWAY_API_KEY && token !== ADMIN_KEY)) {
       return c.json(
@@ -533,6 +534,23 @@ const handleChatCompletion = async (c: Context) => {
 
 app.post('/v1/chat/completions', handleChatCompletion);
 app.post('/chat/completions', handleChatCompletion);
+
+// Friendly GET handler for browsers / humans clicking the URL
+app.get('/v1/chat/completions', (c) => {
+  return c.json({
+    status: 'ok',
+    endpoint: '/v1/chat/completions',
+    method: 'POST',
+    description: 'OpenAI-compatible Chat Completions Endpoint. Use POST with JSON payload or test via the Playground.',
+    playground_url: '/admin?tab=playground',
+    example_request: {
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: 'Hello!' }],
+      stream: true,
+    },
+  });
+});
+app.get('/chat/completions', (c) => c.redirect('/v1/chat/completions'));
 
 // Start Server
 export function startServer(port = PORT) {

@@ -582,6 +582,108 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
         </div>
       </div>
 
+      <!-- 核心端点快速导航表格 (一键点击直接在新窗口或弹窗中查看) -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 1px solid rgba(99,102,241,0.35); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="card-header" style="background: rgba(99,102,241,0.08); padding: 0.85rem 1.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-size: 1.25rem;">🔗</span>
+            <div>
+              <div class="card-title" style="font-size: 1rem; color: #fff;">核心服务与 API 端点清单 (点击链接直接查看 / 点击按钮查看实时响应)</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                点击任意蓝色链接可在新标签页打开；点击绿色/青色按钮可直接在当前页面查看实时返回数据
+              </div>
+            </div>
+          </div>
+          <span class="badge" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">🟢 全部端点在线</span>
+        </div>
+
+        <div class="table-container" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 22%; padding: 0.75rem 1.25rem;">服务 / API 名称</th>
+                <th style="width: 46%; padding: 0.75rem 1rem;">直接访问链接 (点击即可在新标签页打开)</th>
+                <th style="width: 32%; padding: 0.75rem 1.25rem; text-align: right;">即时操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- ROW 1: 单页可视化管理控制台 -->
+              <tr>
+                <td style="font-weight: 600; font-size: 0.92rem; padding: 0.85rem 1.25rem;">
+                  🖥️ 单页可视化管理控制台
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <a id="linkAdmin" href="/admin" target="_blank" style="color: #60a5fa; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口打开控制台">
+                    <span>🔗</span> <span id="textAdminUrl">http://8.218.252.65/admin</span> <span style="font-size: 0.75rem; color: #93c5fd;">↗</span>
+                  </a>
+                </td>
+                <td style="text-align: right; padding: 0.85rem 1.25rem;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <button class="btn btn-sm" onclick="switchTab('tab-channels')">🔌 进入密钥池</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/admin')">📋 复制</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 2: 健康状态检测 API -->
+              <tr>
+                <td style="font-weight: 600; font-size: 0.92rem; padding: 0.85rem 1.25rem;">
+                  🩺 健康状态检测 API
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <a id="linkHealth" href="/health" target="_blank" style="color: #34d399; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看 JSON 响应">
+                    <span>🔗</span> <span id="textHealthUrl">http://8.218.252.65/health</span> <span style="font-size: 0.75rem; color: #6ee7b7;">↗</span>
+                  </a>
+                </td>
+                <td style="text-align: right; padding: 0.85rem 1.25rem;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <button class="btn btn-sm" style="background: #059669;" onclick="viewEndpointModal('health')">👁️ 点击查看数据</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/health')">📋 复制</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 3: 聚合模型列表 API -->
+              <tr>
+                <td style="font-weight: 600; font-size: 0.92rem; padding: 0.85rem 1.25rem;">
+                  🤖 聚合模型列表 API
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <a id="linkModels" href="/v1/models" target="_blank" style="color: #22d3ee; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看模型列表 JSON">
+                    <span>🔗</span> <span id="textModelsUrl">http://8.218.252.65/v1/models</span> <span style="font-size: 0.75rem; color: #67e8f9;">↗</span>
+                  </a>
+                </td>
+                <td style="text-align: right; padding: 0.85rem 1.25rem;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <button class="btn btn-sm" style="background: #0891b2;" onclick="viewEndpointModal('models')">👁️ 点击查看模型</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/v1/models')">📋 复制</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ROW 4: 标准对话补全 API -->
+              <tr>
+                <td style="font-weight: 600; font-size: 0.92rem; padding: 0.85rem 1.25rem;">
+                  💬 标准对话补全 API
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <a id="linkChat" href="/v1/chat/completions" target="_blank" style="color: #fbbf24; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看接口规范">
+                    <span>🔗</span> <span id="textChatUrl">http://8.218.252.65/v1/chat/completions</span> <span style="font-size: 0.75rem; color: #fde68a;">↗</span>
+                  </a>
+                </td>
+                <td style="text-align: right; padding: 0.85rem 1.25rem;">
+                  <div style="display: inline-flex; gap: 0.4rem;">
+                    <button class="btn btn-sm" style="background: #d97706;" onclick="viewEndpointModal('chat')">👁️ 点击查看文档</button>
+                    <button class="btn btn-secondary btn-sm" onclick="switchTab('tab-playground')">⚡ 在线演练</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/v1/chat/completions')">📋 复制</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- 4 Core Endpoint Cards -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
         
@@ -592,7 +694,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(99,102,241,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🖥️</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">单页可视化管理控制台</div>
-                <div id="adminUrlText" style="font-size:0.75rem; color:#818cf8; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/admin')" title="点击复制">/admin</div>
+                <a id="adminCardLink" href="/admin" target="_blank" style="font-size:0.75rem; color:#818cf8; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="adminUrlText">/admin</span> <span>↗</span></a>
               </div>
             </div>
             <span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);">🟢 在线运行中</span>
@@ -617,7 +719,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🩺</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">健康状态检测 API</div>
-                <div id="healthUrlText" style="font-size:0.75rem; color:#34d399; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/health')" title="点击复制">/health</div>
+                <a id="healthCardLink" href="/health" target="_blank" style="font-size:0.75rem; color:#34d399; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="healthUrlText">/health</span> <span>↗</span></a>
               </div>
             </div>
             <span id="healthBadge" class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);">🟢 探测中...</span>
@@ -634,7 +736,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               </div>
             </div>
             <div style="display:flex; gap:0.5rem;">
-              <button class="btn btn-sm" onclick="fetchLiveHealth()">🔄 即时探测</button>
+              <button class="btn btn-sm" style="background: #059669;" onclick="viewEndpointModal('health')">👁️ 点击查看数据</button>
               <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/health')">📋 复制 URL</button>
             </div>
           </div>
@@ -647,7 +749,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(6,182,212,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🤖</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">聚合模型列表 API</div>
-                <div id="modelsUrlText" style="font-size:0.75rem; color:#22d3ee; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/v1/models')" title="点击复制">/v1/models</div>
+                <a id="modelsCardLink" href="/v1/models" target="_blank" style="font-size:0.75rem; color:#22d3ee; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="modelsUrlText">/v1/models</span> <span>↗</span></a>
               </div>
             </div>
             <span id="modelsCountBadge" class="badge" style="background:rgba(6,182,212,0.15); color:#22d3ee; border-color:rgba(6,182,212,0.3);">加载中...</span>
@@ -658,7 +760,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <span style="color:var(--text-muted); font-size:0.75rem;">正在拉取模型目录...</span>
             </div>
             <div style="display:flex; gap:0.5rem;">
-              <button class="btn btn-sm" onclick="fetchLiveModels()">🔄 刷新列表</button>
+              <button class="btn btn-sm" style="background: #0891b2;" onclick="viewEndpointModal('models')">👁️ 点击查看模型</button>
               <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/v1/models')">📋 复制 URL</button>
             </div>
           </div>
@@ -671,7 +773,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">💬</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">标准对话补全 API</div>
-                <div id="chatUrlText" style="font-size:0.75rem; color:#fbbf24; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/v1/chat/completions')" title="点击复制">/v1/chat/completions</div>
+                <a id="chatCardLink" href="/v1/chat/completions" target="_blank" style="font-size:0.75rem; color:#fbbf24; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="chatUrlText">/v1/chat/completions</span> <span>↗</span></a>
               </div>
             </div>
             <span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);">OpenAI 规范兼容</span>
@@ -679,7 +781,8 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
           <div style="padding:1rem 1.25rem; font-size:0.85rem; flex:1;">
             <p style="color:var(--text-muted); margin-bottom:0.75rem;">对外暴露标准 OpenAI 兼容接口，支持流式 SSE 打字机，对内自动桥接多厂商协议并静默容灾。</p>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <button class="btn btn-sm" onclick="switchTab('tab-playground')">⚡ 立即演练 (Playground)</button>
+              <button class="btn btn-sm" style="background: #d97706;" onclick="viewEndpointModal('chat')">👁️ 点击查看文档</button>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('tab-playground')">⚡ 在线演练</button>
               <button class="btn btn-secondary btn-sm" onclick="copyCurlExample()">📋 复制 cURL</button>
             </div>
           </div>
@@ -948,6 +1051,35 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
 
   <div id="toast" class="toast"></div>
 
+  <!-- Live Response Viewer Modal -->
+  <div id="responseModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;">
+    <div class="card" style="width:92%; max-width:820px; max-height:86vh; display:flex; flex-direction:column; border:1px solid #6366f1; box-shadow:0 25px 60px -12px rgba(0,0,0,0.85); animation:fadeIn 0.15s ease-out;">
+      <div class="card-header" style="padding:1rem 1.25rem; background:rgba(17,24,39,0.95); border-bottom:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.3rem;">👁️</span>
+          <div>
+            <div id="modalTitle" class="card-title" style="font-size:1.05rem; color:#fff;">实时端点数据查看器</div>
+            <div id="modalSubtitle" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">GET /health</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span id="modalStatusBadge" class="badge" style="background:rgba(16,185,129,0.15); color:#34d399;">200 OK</span>
+          <button class="btn btn-secondary btn-sm" onclick="closeResponseModal()">✕ 关闭</button>
+        </div>
+      </div>
+      <div style="padding:1rem 1.25rem; flex:1; overflow-y:auto; background:#070b12;">
+        <pre id="modalJsonContent" style="margin:0; font-family:var(--font-mono); font-size:0.82rem; color:#67e8f9; line-height:1.55; white-space:pre-wrap; word-break:break-all; max-height:56vh; overflow-y:auto;"></pre>
+      </div>
+      <div style="padding:0.75rem 1.25rem; background:rgba(17,24,39,0.85); border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <span id="modalMeta" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">响应耗时: 12ms</span>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-secondary btn-sm" onclick="copyText(document.getElementById('modalJsonContent').textContent)">📋 复制 JSON 数据</button>
+          <button class="btn btn-sm" onclick="closeResponseModal()">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Local state & persistence
     const state = {
@@ -1097,10 +1229,99 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
       }
     }
 
+    function closeResponseModal() {
+      const modal = document.getElementById('responseModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function viewEndpointModal(type) {
+      const modal = document.getElementById('responseModal');
+      const title = document.getElementById('modalTitle');
+      const subtitle = document.getElementById('modalSubtitle');
+      const badge = document.getElementById('modalStatusBadge');
+      const content = document.getElementById('modalJsonContent');
+      const meta = document.getElementById('modalMeta');
+
+      modal.style.display = 'flex';
+      badge.textContent = '请求中...';
+      badge.style.color = '#fbbf24';
+      badge.style.background = 'rgba(245,158,11,0.15)';
+      content.textContent = '正在获取实时端点数据...';
+      const start = performance.now();
+
+      try {
+        if (type === 'health') {
+          title.textContent = '🩺 健康状态检测 API 实时响应';
+          subtitle.textContent = 'GET ' + window.location.origin + '/health';
+          const res = await fetch('/health');
+          const data = await res.json();
+          const duration = Math.round(performance.now() - start);
+          badge.textContent = res.status + ' OK';
+          badge.style.color = '#34d399';
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          meta.textContent = '响应耗时: ' + duration + 'ms | 协议: HTTP/1.1';
+          content.textContent = JSON.stringify(data, null, 2);
+        } else if (type === 'models') {
+          title.textContent = '🤖 聚合模型列表 API 实时响应';
+          subtitle.textContent = 'GET ' + window.location.origin + '/v1/models';
+          const res = await fetch('/v1/models', {
+            headers: {
+              'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey)
+            }
+          });
+          const data = await res.json();
+          const duration = Math.round(performance.now() - start);
+          badge.textContent = res.status + ' ' + (res.statusText || 'OK');
+          badge.style.color = res.ok ? '#34d399' : '#ef4444';
+          badge.style.background = res.ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+          meta.textContent = '响应耗时: ' + duration + 'ms | 模型总数: ' + (data.data ? data.data.length : 0);
+          content.textContent = JSON.stringify(data, null, 2);
+        } else if (type === 'chat') {
+          title.textContent = '💬 标准对话补全 API 规范与示例';
+          subtitle.textContent = 'POST/GET ' + window.location.origin + '/v1/chat/completions';
+          const res = await fetch('/v1/chat/completions');
+          const data = await res.json();
+          const duration = Math.round(performance.now() - start);
+          badge.textContent = '200 OK';
+          badge.style.color = '#34d399';
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          meta.textContent = '响应耗时: ' + duration + 'ms | OpenAI v1 规范兼容';
+          content.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        badge.textContent = 'Error';
+        badge.style.color = '#ef4444';
+        badge.style.background = 'rgba(239,68,68,0.15)';
+        content.textContent = '请求失败: ' + err.message;
+      }
+    }
+
     function loadOverviewData() {
       const origin = window.location.origin;
       const key = state.gatewayKey || '${defaultGatewayKey}';
       
+      const setLink = (idText, idLink, path, withToken = false) => {
+        const fullUrl = origin + path + (withToken ? ('?token=' + encodeURIComponent(key)) : '');
+        const elText = document.getElementById(idText);
+        if (elText) elText.textContent = origin + path;
+        const elLink = document.getElementById(idLink);
+        if (elLink) elLink.href = fullUrl;
+      };
+
+      setLink('textAdminUrl', 'linkAdmin', '/admin');
+      setLink('textHealthUrl', 'linkHealth', '/health');
+      setLink('textModelsUrl', 'linkModels', '/v1/models', true);
+      setLink('textChatUrl', 'linkChat', '/v1/chat/completions', true);
+
+      const adminCard = document.getElementById('adminCardLink');
+      if (adminCard) adminCard.href = origin + '/admin';
+      const healthCard = document.getElementById('healthCardLink');
+      if (healthCard) healthCard.href = origin + '/health';
+      const modelsCard = document.getElementById('modelsCardLink');
+      if (modelsCard) modelsCard.href = origin + '/v1/models?token=' + encodeURIComponent(key);
+      const chatCard = document.getElementById('chatCardLink');
+      if (chatCard) chatCard.href = origin + '/v1/chat/completions?token=' + encodeURIComponent(key);
+
       const adminUrl = document.getElementById('adminUrlText');
       if (adminUrl) adminUrl.textContent = origin + '/admin';
       const healthUrl = document.getElementById('healthUrlText');
