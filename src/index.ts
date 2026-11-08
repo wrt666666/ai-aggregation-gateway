@@ -22,7 +22,7 @@ const app = new Hono();
 app.use('*', cors());
 
 const GATEWAY_API_KEY = process.env.GATEWAY_API_KEY || 'sk-gateway-secret-key-123456';
-const ADMIN_KEY = process.env.ADMIN_KEY || 'admin-secret-2026';
+const ADMIN_KEY = process.env.ADMIN_SECRET || process.env.ADMIN_KEY || 'admin-secret-2026';
 const PORT = Number(process.env.PORT || 3000);
 
 // Initialize router with default upstream channels
@@ -61,6 +61,15 @@ export const router = new ChannelRouter(defaultChannels);
 
 // 1. Gateway Client Auth Middleware
 const authMiddleware = async (c: Context, next: () => Promise<void>) => {
+  // Allow GET /v1/chat/completions and GET /chat/completions as friendly spec/docs endpoint
+  if (c.req.method === 'GET') {
+    const path = c.req.path;
+    if (path === '/v1/chat/completions' || path === '/chat/completions') {
+      await next();
+      return;
+    }
+  }
+
   if (GATEWAY_API_KEY) {
     const authHeader = c.req.header('Authorization') || c.req.header('x-api-key');
     const queryToken = c.req.query('token') || c.req.query('key');

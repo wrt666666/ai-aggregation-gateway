@@ -614,7 +614,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
                 </td>
                 <td style="padding: 0.85rem 1rem;">
                   <a id="linkAdmin" href="/admin" target="_blank" style="color: #60a5fa; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口打开控制台">
-                    <span>🔗</span> <span id="textAdminUrl">http://8.218.252.65/admin</span> <span style="font-size: 0.75rem; color: #93c5fd;">↗</span>
+                    <span>🔗</span> <span id="textAdminUrl">/admin</span> <span style="font-size: 0.75rem; color: #93c5fd;">↗</span>
                   </a>
                 </td>
                 <td style="text-align: right; padding: 0.85rem 1.25rem;">
@@ -632,7 +632,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
                 </td>
                 <td style="padding: 0.85rem 1rem;">
                   <a id="linkHealth" href="/health" target="_blank" style="color: #34d399; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看 JSON 响应">
-                    <span>🔗</span> <span id="textHealthUrl">http://8.218.252.65/health</span> <span style="font-size: 0.75rem; color: #6ee7b7;">↗</span>
+                    <span>🔗</span> <span id="textHealthUrl">/health</span> <span style="font-size: 0.75rem; color: #6ee7b7;">↗</span>
                   </a>
                 </td>
                 <td style="text-align: right; padding: 0.85rem 1.25rem;">
@@ -649,8 +649,8 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
                   🤖 聚合模型列表 API
                 </td>
                 <td style="padding: 0.85rem 1rem;">
-                  <a id="linkModels" href="/v1/models" target="_blank" style="color: #22d3ee; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看模型列表 JSON">
-                    <span>🔗</span> <span id="textModelsUrl">http://8.218.252.65/v1/models</span> <span style="font-size: 0.75rem; color: #67e8f9;">↗</span>
+                  <a id="linkModels" href="/v1/models?token=${encodeURIComponent(defaultGatewayKey)}" target="_blank" style="color: #22d3ee; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看模型列表 JSON">
+                    <span>🔗</span> <span id="textModelsUrl">/v1/models?token=${encodeURIComponent(defaultGatewayKey)}</span> <span style="font-size: 0.75rem; color: #67e8f9;">↗</span>
                   </a>
                 </td>
                 <td style="text-align: right; padding: 0.85rem 1.25rem;">
@@ -667,8 +667,8 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
                   💬 标准对话补全 API
                 </td>
                 <td style="padding: 0.85rem 1rem;">
-                  <a id="linkChat" href="/v1/chat/completions" target="_blank" style="color: #fbbf24; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看接口规范">
-                    <span>🔗</span> <span id="textChatUrl">http://8.218.252.65/v1/chat/completions</span> <span style="font-size: 0.75rem; color: #fde68a;">↗</span>
+                  <a id="linkChat" href="/v1/chat/completions?token=${encodeURIComponent(defaultGatewayKey)}" target="_blank" style="color: #fbbf24; text-decoration: none; font-family: var(--font-mono); font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500;" title="在新窗口查看接口规范">
+                    <span>🔗</span> <span id="textChatUrl">/v1/chat/completions?token=${encodeURIComponent(defaultGatewayKey)}</span> <span style="font-size: 0.75rem; color: #fde68a;">↗</span>
                   </a>
                 </td>
                 <td style="text-align: right; padding: 0.85rem 1.25rem;">
@@ -749,7 +749,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(6,182,212,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🤖</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">聚合模型列表 API</div>
-                <a id="modelsCardLink" href="/v1/models" target="_blank" style="font-size:0.75rem; color:#22d3ee; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="modelsUrlText">/v1/models</span> <span>↗</span></a>
+                <a id="modelsCardLink" href="/v1/models?token=${encodeURIComponent(defaultGatewayKey)}" target="_blank" style="font-size:0.75rem; color:#22d3ee; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="modelsUrlText">/v1/models?token=${encodeURIComponent(defaultGatewayKey)}</span> <span>↗</span></a>
               </div>
             </div>
             <span id="modelsCountBadge" class="badge" style="background:rgba(6,182,212,0.15); color:#22d3ee; border-color:rgba(6,182,212,0.3);">加载中...</span>
@@ -773,7 +773,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
               <div style="width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">💬</div>
               <div>
                 <div class="card-title" style="font-size:1rem;">标准对话补全 API</div>
-                <a id="chatCardLink" href="/v1/chat/completions" target="_blank" style="font-size:0.75rem; color:#fbbf24; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="chatUrlText">/v1/chat/completions</span> <span>↗</span></a>
+                <a id="chatCardLink" href="/v1/chat/completions?token=${encodeURIComponent(defaultGatewayKey)}" target="_blank" style="font-size:0.75rem; color:#fbbf24; font-family:var(--font-mono); text-decoration:none; display:inline-flex; align-items:center; gap:2px;"><span id="chatUrlText">/v1/chat/completions?token=${encodeURIComponent(defaultGatewayKey)}</span> <span>↗</span></a>
               </div>
             </div>
             <span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);">OpenAI 规范兼容</span>
@@ -1052,8 +1052,8 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
   <div id="toast" class="toast"></div>
 
   <!-- Live Response Viewer Modal -->
-  <div id="responseModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;">
-    <div class="card" style="width:92%; max-width:820px; max-height:86vh; display:flex; flex-direction:column; border:1px solid #6366f1; box-shadow:0 25px 60px -12px rgba(0,0,0,0.85); animation:fadeIn 0.15s ease-out;">
+  <div id="responseModal" onclick="if(event.target === this) closeResponseModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;">
+    <div class="card" onclick="event.stopPropagation()" style="width:92%; max-width:820px; max-height:86vh; display:flex; flex-direction:column; border:1px solid #6366f1; box-shadow:0 25px 60px -12px rgba(0,0,0,0.85); animation:fadeIn 0.15s ease-out;">
       <div class="card-header" style="padding:1rem 1.25rem; background:rgba(17,24,39,0.95); border-bottom:1px solid var(--border);">
         <div style="display:flex; align-items:center; gap:0.6rem;">
           <span style="font-size:1.3rem;">👁️</span>
@@ -1115,6 +1115,50 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
       setTimeout(() => el.className = 'toast', 2500);
     }
 
+    // Clipboard helper with non-secure HTTP fallback (document.execCommand)
+    function copyText(text) {
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('已复制到剪贴板', 'success');
+        }).catch(() => {
+          fallbackCopyText(text);
+        });
+      } else {
+        fallbackCopyText(text);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (successful) {
+          showToast('已复制到剪贴板', 'success');
+        } else {
+          showToast('复制失败，请手动复制', 'error');
+        }
+      } catch (err) {
+        showToast('复制失败: ' + err.message, 'error');
+      }
+    }
+
+    // Modal ESC key listener
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeResponseModal();
+      }
+    });
+
     // Tab navigation
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => {
@@ -1136,16 +1180,21 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     });
 
     function copyEndpoint(path) {
-      copyText(window.location.origin + path);
+      const origin = window.location.origin;
+      const key = state.gatewayKey || '${defaultGatewayKey}';
+      const needToken = path.startsWith('/v1/');
+      const fullUrl = origin + path + (needToken ? ('?token=' + encodeURIComponent(key)) : '');
+      copyText(fullUrl);
     }
 
     function copyCurlExample() {
       const origin = window.location.origin;
       const key = state.gatewayKey || '${defaultGatewayKey}';
+      const body = '{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"Hello"}]}';
       const cmd = 'curl ' + origin + '/v1/chat/completions \\\n' +
         '  -H "Content-Type: application/json" \\\n' +
         '  -H "Authorization: Bearer ' + key + '" \\\n' +
-        '  -d \'{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"Hello"}]}\'';
+        "  -d '" + body + "'";
       copyText(cmd);
     }
 
@@ -1303,7 +1352,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
       const setLink = (idText, idLink, path, withToken = false) => {
         const fullUrl = origin + path + (withToken ? ('?token=' + encodeURIComponent(key)) : '');
         const elText = document.getElementById(idText);
-        if (elText) elText.textContent = origin + path;
+        if (elText) elText.textContent = fullUrl;
         const elLink = document.getElementById(idLink);
         if (elLink) elLink.href = fullUrl;
       };
@@ -1327,9 +1376,9 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
       const healthUrl = document.getElementById('healthUrlText');
       if (healthUrl) healthUrl.textContent = origin + '/health';
       const modelsUrl = document.getElementById('modelsUrlText');
-      if (modelsUrl) modelsUrl.textContent = origin + '/v1/models';
+      if (modelsUrl) modelsUrl.textContent = origin + '/v1/models?token=' + encodeURIComponent(key);
       const chatUrl = document.getElementById('chatUrlText');
-      if (chatUrl) chatUrl.textContent = origin + '/v1/chat/completions';
+      if (chatUrl) chatUrl.textContent = origin + '/v1/chat/completions?token=' + encodeURIComponent(key);
 
       const baseDisplay = document.getElementById('apiBaseUrlDisplay');
       if (baseDisplay) baseDisplay.value = origin + '/v1';
@@ -1338,10 +1387,11 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
 
       const preview = document.getElementById('curlCommandPreview');
       if (preview) {
+        const body = '{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"你好"}]}';
         preview.textContent = 'curl ' + origin + '/v1/chat/completions \\\n' +
           '  -H "Content-Type: application/json" \\\n' +
           '  -H "Authorization: Bearer ' + key + '" \\\n' +
-          '  -d \'{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"你好"}]}\'';
+          "  -d '" + body + "'";
       }
 
       fetchLiveHealth();
