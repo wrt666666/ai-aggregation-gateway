@@ -35,7 +35,8 @@ export class StateStore {
    * Get audit logs, newest first
    */
   public getLogs(limit = 50): AuditLogEntry[] {
-    return this.logs.slice(0, Math.min(limit, this.logs.length));
+    const safeLimit = Math.max(1, Math.min(Number(limit) || 50, this.maxLogs));
+    return this.logs.slice(0, Math.min(safeLimit, this.logs.length));
   }
 
   /**
@@ -94,6 +95,12 @@ export class StateStore {
     };
 
     this.videoTasks.set(taskId, task);
+    if (this.videoTasks.size > 200) {
+      const oldestKey = this.videoTasks.keys().next().value;
+      if (oldestKey) {
+        this.videoTasks.delete(oldestKey);
+      }
+    }
 
     // Asynchronous state transition simulation
     const step1 = setTimeout(() => {

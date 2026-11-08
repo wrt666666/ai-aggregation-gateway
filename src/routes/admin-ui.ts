@@ -954,7 +954,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
           body: JSON.stringify({ id, name: name || id, protocol, endpoint, apiKeys, models, weight }),
         });
         if (!res.ok) {
-          const err = await res.json();
+          const err = await res.json().catch(() => ({}));
           throw new Error(err.error || ('HTTP ' + res.status));
         }
         showToast('渠道添加成功', 'success');
@@ -998,7 +998,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + state.gatewayKey,
+            'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey),
           },
           body: JSON.stringify({
             model,
@@ -1009,7 +1009,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
         });
 
         if (!res.ok) {
-          const errJson = await res.json();
+          const errJson = await res.json().catch(() => ({}));
           throw new Error(errJson.error?.message || ('HTTP ' + res.status));
         }
 
@@ -1108,13 +1108,13 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + state.gatewayKey,
+            'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey),
           },
           body: JSON.stringify({ model, prompt })
         });
 
         if (!res.ok) {
-          const err = await res.json();
+          const err = await res.json().catch(() => ({}));
           throw new Error(err.error?.message || ('HTTP ' + res.status));
         }
 
@@ -1136,7 +1136,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     async function pollVideoTask(taskId) {
       try {
         const res = await fetch('/v1/videos/tasks/' + taskId, {
-          headers: { 'Authorization': 'Bearer ' + state.gatewayKey }
+          headers: { 'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey) }
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const task = await res.json();

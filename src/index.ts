@@ -215,8 +215,15 @@ app.get('/api/admin/channels', (c) => {
 app.post('/api/admin/channels', async (c) => {
   try {
     const body = await c.req.json<ChannelConfig>();
-    if (!body.id || !body.endpoint || !body.apiKeys) {
-      return c.json({ error: 'Missing required fields: id, endpoint, apiKeys' }, 400);
+    if (
+      !body ||
+      !body.id ||
+      !body.endpoint ||
+      !body.apiKeys ||
+      !Array.isArray(body.apiKeys) ||
+      body.apiKeys.length === 0
+    ) {
+      return c.json({ error: 'Missing required fields: id, endpoint, apiKeys (non-empty array)' }, 400);
     }
     const node = router.addChannel(body);
     return c.json({ success: true, channel: node });

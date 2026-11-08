@@ -43,8 +43,8 @@ export class ChannelRouter {
 
     const node: ChannelNode = {
       id: config.id,
-      name: config.name,
-      endpoint: config.endpoint.replace(/\/+$/, ''),
+      name: config.name || config.id,
+      endpoint: (config.endpoint || '').replace(/\/+$/, ''),
       protocol: config.protocol || 'openai',
       apiKeys: apiKeys.length > 0 ? apiKeys : ['dummy-key'],
       keyIndex: 0,
@@ -76,8 +76,8 @@ export class ChannelRouter {
   public listMaskedChannels(): MaskedChannelNode[] {
     return Array.from(this.channels.values()).map((ch) => ({
       ...ch,
-      apiKeys: ch.apiKeys.map((k) =>
-        k.length > 8 ? `${k.slice(0, 4)}***${k.slice(-4)}` : '***'
+      apiKeys: (ch.apiKeys || []).map((k) =>
+        typeof k === 'string' && k.length > 8 ? `${k.slice(0, 4)}***${k.slice(-4)}` : '***'
       ),
     }));
   }

@@ -10,6 +10,7 @@
 process.env.NODE_ENV = 'test';
 import assert from 'node:assert';
 import { ChannelRouter } from '../src/core/router.js';
+import { stateStore } from '../src/core/state-store.js';
 import { createStreamRelay } from '../src/core/stream-relay.js';
 import app, { router as gatewayRouter } from '../src/index.js';
 import type { Usage } from '../src/types/schema.js';
@@ -71,6 +72,9 @@ async function runTests() {
   const fallbackRoute = router.selectRoute('gpt-4o');
   assert.strictEqual(fallbackRoute?.channel.id, 'test-backup');
   console.log('  ✓ Router automatically skipped cooling channel and picked backup.');
+
+  // Reset backup models so recovered node is unambiguously chosen
+  router.getChannel('test-backup')!.models = ['fallback-model'];
 
   // Wait for cooldown to expire
   console.log('  Waiting 550ms for cooldown expiration...');
@@ -505,8 +509,158 @@ async function runTests() {
   assert.strictEqual(missingData.error.code, 'model_not_found');
   console.log('  ✓ Admin security and 404 model_not_found behavior verified.');
 
+  // Test 12: SPA Dashboard & Admin Management APIs
+  console.log('\n[Test 12] Testing SPA Dashboard & Admin Management APIs...');
+  // 12.1 Public SPA page
+  const spaRes = await app.request('/admin');
+  assert.strictEqual(spaRes.status, 200);
+  const html = await spaRes.text();
+  assert.ok(html.includes('AI Gateway Hub'), 'Admin SPA HTML title not found');
+  assert.ok(html.includes('id="tab-channels"'), 'Channels tab missing');
+  assert.ok(html.includes('id="tab-playground"'), 'Playground tab missing');
+  assert.ok(html.includes('id="tab-logs"'), 'Logs tab missing');
+
+  // 12.2 Admin API auth with X-Admin-Key
+  const adminChannelsRes = await app.request('/api/admin/channels', {
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(adminChannelsRes.status, 200);
+  const adminChannelsData = await adminChannelsRes.json();
+  assert.ok(Array.isArray(adminChannelsData.channels));
+  assert.ok(adminChannelsData.channels[0].apiKeys[0].includes('***'));
+
+  // 12.3 Dynamic Channel Add & Field Validation
+  const invalidAddRes = await app.request('/api/admin/channels', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': 'admin-secret-2026', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: 'broken-ch' }),
+  });
+  assert.strictEqual(invalidAddRes.status, 400);
+
+  const addChannelRes = await app.request('/api/admin/channels', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': 'admin-secret-2026', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'dynamic-test-node',
+      name: 'Dynamic Test Channel',
+      endpoint: 'https://mock.dynamic.com/v1',
+      protocol: 'openai',
+      apiKeys: ['sk-dynamic-123456789'],
+      models: ['test-model'],
+      weight: 5,
+    }),
+  });
+  assert.strictEqual(addChannelRes.status, 200);
+  assert.ok(gatewayRouter.getChannel('dynamic-test-node'));
+
+  // 12.4 Toggle Channel Status
+  const toggleRes = await app.request('/api/admin/channels/dynamic-test-node/toggle', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(toggleRes.status, 200);
+  assert.strictEqual(gatewayRouter.getChannel('dynamic-test-node')?.status, 'dead');
+
+  const toggleBackRes = await app.request('/api/admin/channels/dynamic-test-node/toggle', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(toggleBackRes.status, 200);
+  assert.strictEqual(gatewayRouter.getChannel('dynamic-test-node')?.status, 'healthy');
+
+  // 12.5 Dynamic Delete Channel
+  const deleteRes = await app.request('/api/admin/channels/dynamic-test-node', {
+    method: 'DELETE',
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(deleteRes.status, 200);
+  assert.strictEqual(gatewayRouter.getChannel('dynamic-test-node'), undefined);
+
+  // 12.6 Metrics & Logs endpoints
+  const metricsRes = await app.request('/api/admin/metrics', {
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(metricsRes.status, 200);
+  const metricsData = await metricsRes.json();
+  assert.strictEqual(typeof metricsData.totalRequests, 'number');
+
+  const logsRes = await app.request('/api/admin/logs?limit=10', {
+    headers: { 'X-Admin-Key': 'admin-secret-2026' },
+  });
+  assert.strictEqual(logsRes.status, 200);
+  const logsData = await logsRes.json();
+  assert.ok(Array.isArray(logsData.logs));
+  console.log('  ✓ SPA Dashboard and Admin Management APIs verified successfully.');
+
+  // Test 13: Async Video Generation & StateStore FIFO Ring Buffer
+  console.log('\n[Test 13] Testing Async Video Generation & StateStore Circular Buffer...');
+  // 13.1 Video prompt validation
+  const invalidVideoRes = await app.request('/v1/videos/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer sk-gateway-secret-key-123456',
+    },
+    body: JSON.stringify({}),
+  });
+  assert.strictEqual(invalidVideoRes.status, 400);
+
+  // 13.2 Create valid video task
+  const createVideoRes = await app.request('/v1/videos/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer sk-gateway-secret-key-123456',
+    },
+    body: JSON.stringify({
+      model: 'sora-1.0',
+      prompt: 'Cyberpunk flying car in rainy Tokyo night',
+    }),
+  });
+  assert.strictEqual(createVideoRes.status, 202);
+  const taskData = await createVideoRes.json();
+  assert.ok(taskData.id.startsWith('vid_'));
+  assert.strictEqual(taskData.status, 'pending');
+
+  // 13.3 Query video task
+  const queryVideoRes = await app.request(`/v1/videos/tasks/${taskData.id}`, {
+    headers: { Authorization: 'Bearer sk-gateway-secret-key-123456' },
+  });
+  assert.strictEqual(queryVideoRes.status, 200);
+  const queriedTask = await queryVideoRes.json();
+  assert.strictEqual(queriedTask.id, taskData.id);
+
+  // 13.4 Query 404 video task
+  const notFoundVideoRes = await app.request('/v1/videos/tasks/vid_non_existent', {
+    headers: { Authorization: 'Bearer sk-gateway-secret-key-123456' },
+  });
+  assert.strictEqual(notFoundVideoRes.status, 404);
+
+  // 13.5 StateStore FIFO Ring Buffer Boundary (insert > 200 logs)
+  for (let i = 0; i < 220; i++) {
+    stateStore.appendLog({
+      id: `stress-log-${i}`,
+      timestamp: Date.now(),
+      model: 'gpt-4o',
+      stream: false,
+      durationMs: 50,
+      status: 'success',
+      statusCode: 200,
+      promptTokens: 10,
+      completionTokens: 20,
+      totalTokens: 30,
+    });
+  }
+  const allLogs = stateStore.getLogs(300);
+  assert.strictEqual(allLogs.length, 200, 'Circular buffer must be strictly capped at 200 items');
+  assert.strictEqual(allLogs[0].id, 'stress-log-219', 'Newest log must be at index 0');
+  const metricsAfterStress = stateStore.getMetrics();
+  assert.strictEqual(metricsAfterStress.totalRequests, 200);
+  assert.strictEqual(metricsAfterStress.totalTokens, 200 * 30);
+  console.log('  ✓ Async video generation and StateStore 200 FIFO buffer verified successfully.');
+
   console.log('\n=======================================');
-  console.log('🎉 ALL 11 VERIFICATION TEST SUITES PASSED!');
+  console.log('🎉 ALL 13 VERIFICATION TEST SUITES PASSED!');
   console.log('=======================================');
 }
 
