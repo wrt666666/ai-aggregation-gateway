@@ -556,14 +556,169 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
   </header>
 
   <nav class="nav-tabs">
-    <button class="tab-btn active" data-tab="tab-channels">🔌 渠道与密钥池管理</button>
+    <button class="tab-btn active" data-tab="tab-overview">🌐 全景控制台 (All-In-One Hub)</button>
+    <button class="tab-btn" data-tab="tab-channels">🔌 渠道与密钥池管理</button>
     <button class="tab-btn" data-tab="tab-playground">⚡ 对话 & 视频生成演练场</button>
     <button class="tab-btn" data-tab="tab-logs">📊 实时审计与性能大盘</button>
   </nav>
 
   <main>
+    <!-- TAB 0: ALL-IN-ONE OVERVIEW HUB -->
+    <section id="tab-overview" class="panel active">
+      <div style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1)); padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid rgba(99,102,241,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h1 style="font-size: 1.35rem; font-weight: 800; color: #fff; display:flex; align-items:center; gap:0.5rem;">
+              <span>🌐</span> AI 聚合网关全景中枢与端点大盘
+            </h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+              统一门户：四个核心服务与 API 端点已全部聚合在当前单页中，支持实时透视、在线演练与全生命周期运维。
+            </p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="loadOverviewData()">🔄 刷新全盘状态</button>
+            <button class="btn btn-sm" onclick="switchTab('tab-playground')">⚡ 立即测试对话</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Core Endpoint Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+        
+        <!-- CARD 1: 单页可视化管理控制台 -->
+        <div class="card" style="border-top: 3px solid #6366f1; display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="width:32px; height:32px; border-radius:8px; background:rgba(99,102,241,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🖥️</div>
+              <div>
+                <div class="card-title" style="font-size:1rem;">单页可视化管理控制台</div>
+                <div id="adminUrlText" style="font-size:0.75rem; color:#818cf8; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/admin')" title="点击复制">/admin</div>
+              </div>
+            </div>
+            <span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);">🟢 在线运行中</span>
+          </div>
+          <div style="padding:1rem 1.25rem; font-size:0.85rem; color:var(--text-muted); flex:1;">
+            <p style="margin-bottom:0.75rem;">内置零打包微内核控制台，直接在当前页面管理渠道节点、轮询多 Key 密钥池与审计大盘。</p>
+            <div style="background:#090d16; padding:0.6rem 0.8rem; border-radius:6px; border:1px solid var(--border); font-family:var(--font-mono); font-size:0.75rem; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+              <span>密码: <span style="color:#fff;">admin-secret-2026</span></span>
+              <button class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.7rem;" onclick="copyText('admin-secret-2026')">复制</button>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-sm" onclick="switchTab('tab-channels')">🔌 密钥池配置</button>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('tab-logs')">📊 审计大盘</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: 健康状态检测 API -->
+        <div class="card" style="border-top: 3px solid #10b981; display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="width:32px; height:32px; border-radius:8px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🩺</div>
+              <div>
+                <div class="card-title" style="font-size:1rem;">健康状态检测 API</div>
+                <div id="healthUrlText" style="font-size:0.75rem; color:#34d399; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/health')" title="点击复制">/health</div>
+              </div>
+            </div>
+            <span id="healthBadge" class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);">🟢 探测中...</span>
+          </div>
+          <div style="padding:1rem 1.25rem; font-size:0.85rem; flex:1;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-bottom:0.75rem;">
+              <div style="background:#090d16; padding:0.5rem 0.75rem; border-radius:6px; border:1px solid var(--border);">
+                <div style="font-size:0.7rem; color:var(--text-muted);">运行时间 (Uptime)</div>
+                <div id="healthUptime" style="font-family:var(--font-mono); font-weight:700; color:#fff; font-size:0.95rem;">-</div>
+              </div>
+              <div style="background:#090d16; padding:0.5rem 0.75rem; border-radius:6px; border:1px solid var(--border);">
+                <div style="font-size:0.7rem; color:var(--text-muted);">渠道可用率</div>
+                <div id="healthChannelsStatus" style="font-family:var(--font-mono); font-weight:700; color:#34d399; font-size:0.95rem;">-</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-sm" onclick="fetchLiveHealth()">🔄 即时探测</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/health')">📋 复制 URL</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: 聚合模型列表 API -->
+        <div class="card" style="border-top: 3px solid #06b6d4; display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="width:32px; height:32px; border-radius:8px; background:rgba(6,182,212,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🤖</div>
+              <div>
+                <div class="card-title" style="font-size:1rem;">聚合模型列表 API</div>
+                <div id="modelsUrlText" style="font-size:0.75rem; color:#22d3ee; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/v1/models')" title="点击复制">/v1/models</div>
+              </div>
+            </div>
+            <span id="modelsCountBadge" class="badge" style="background:rgba(6,182,212,0.15); color:#22d3ee; border-color:rgba(6,182,212,0.3);">加载中...</span>
+          </div>
+          <div style="padding:1rem 1.25rem; font-size:0.85rem; flex:1;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.35rem;">当前可用模型 (点击任一模型进入调试)：</div>
+            <div id="overviewModelsList" style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.75rem; min-height:42px;">
+              <span style="color:var(--text-muted); font-size:0.75rem;">正在拉取模型目录...</span>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-sm" onclick="fetchLiveModels()">🔄 刷新列表</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyEndpoint('/v1/models')">📋 复制 URL</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: 标准对话补全 API -->
+        <div class="card" style="border-top: 3px solid #f59e0b; display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">💬</div>
+              <div>
+                <div class="card-title" style="font-size:1rem;">标准对话补全 API</div>
+                <div id="chatUrlText" style="font-size:0.75rem; color:#fbbf24; font-family:var(--font-mono); cursor:pointer;" onclick="copyEndpoint('/v1/chat/completions')" title="点击复制">/v1/chat/completions</div>
+              </div>
+            </div>
+            <span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);">OpenAI 规范兼容</span>
+          </div>
+          <div style="padding:1rem 1.25rem; font-size:0.85rem; flex:1;">
+            <p style="color:var(--text-muted); margin-bottom:0.75rem;">对外暴露标准 OpenAI 兼容接口，支持流式 SSE 打字机，对内自动桥接多厂商协议并静默容灾。</p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-sm" onclick="switchTab('tab-playground')">⚡ 立即演练 (Playground)</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyCurlExample()">📋 复制 cURL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Integration Guide -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚀 客户端一键接入指南 (Client Quick-Connect)</div>
+          <span class="badge">NextChat / Cherry Studio / Python / Node</span>
+        </div>
+        <div style="padding:1.25rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">API Base URL (接口基地址):</label>
+              <div style="display:flex; gap:0.5rem; margin-top:4px;">
+                <input type="text" id="apiBaseUrlDisplay" readonly class="form-control" style="font-family:var(--font-mono); font-size:0.8rem;" />
+                <button class="btn btn-secondary btn-sm" onclick="copyText(document.getElementById('apiBaseUrlDisplay').value)">复制</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">Gateway Token (调用密钥):</label>
+              <div style="display:flex; gap:0.5rem; margin-top:4px;">
+                <input type="text" id="apiKeyDisplay" readonly class="form-control" style="font-family:var(--font-mono); font-size:0.8rem;" />
+                <button class="btn btn-secondary btn-sm" onclick="copyText(document.getElementById('apiKeyDisplay').value)">复制</button>
+              </div>
+            </div>
+          </div>
+          <div style="background:#090d16; padding:0.85rem 1rem; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); font-size:0.75rem; color:#cbd5e1; overflow-x:auto;">
+            <div style="color:var(--text-muted); margin-bottom:4px;"># cURL 极速验证命令：</div>
+            <pre id="curlCommandPreview" style="margin:0; white-space:pre-wrap;"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 1: CHANNELS -->
-    <section id="tab-channels" class="panel active">
+    <section id="tab-channels" class="panel">
       <div class="card">
         <div class="card-header">
           <div class="card-title">🔌 活跃模型与密钥池列表</div>
@@ -829,18 +984,148 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     }
 
     // Tab navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-tab') === tabId);
+      });
+      document.querySelectorAll('.panel').forEach(p => {
+        p.classList.toggle('active', p.id === tabId);
+      });
+
+      if (tabId === 'tab-overview') loadOverviewData();
+      if (tabId === 'tab-channels') loadChannels();
+      if (tabId === 'tab-logs') loadMetricsAndLogs();
+    }
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        const tabId = btn.getAttribute('data-tab');
-        document.getElementById(tabId).classList.add('active');
-
-        if (tabId === 'tab-channels') loadChannels();
-        if (tabId === 'tab-logs') loadMetricsAndLogs();
+        switchTab(btn.getAttribute('data-tab'));
       });
     });
+
+    function copyEndpoint(path) {
+      copyText(window.location.origin + path);
+    }
+
+    function copyCurlExample() {
+      const origin = window.location.origin;
+      const key = state.gatewayKey || '${defaultGatewayKey}';
+      const cmd = 'curl ' + origin + '/v1/chat/completions \\\n' +
+        '  -H "Content-Type: application/json" \\\n' +
+        '  -H "Authorization: Bearer ' + key + '" \\\n' +
+        '  -d \'{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"Hello"}]}\'';
+      copyText(cmd);
+    }
+
+    async function fetchLiveHealth() {
+      const badge = document.getElementById('healthBadge');
+      const uptimeEl = document.getElementById('healthUptime');
+      const channelsEl = document.getElementById('healthChannelsStatus');
+      badge.textContent = '探测中...';
+      try {
+        const res = await fetch('/health');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        badge.textContent = '🟢 正常 (200 OK)';
+        badge.style.color = '#34d399';
+        uptimeEl.textContent = Math.round(data.uptime) + 's';
+        const channels = data.channels || [];
+        const healthyCount = channels.filter(c => c.status === 'healthy').length;
+        channelsEl.textContent = healthyCount + ' / ' + channels.length + ' 正常';
+      } catch (err) {
+        badge.textContent = '🔴 异常 (' + err.message + ')';
+        badge.style.color = '#ef4444';
+      }
+    }
+
+    async function fetchLiveModels() {
+      const badge = document.getElementById('modelsCountBadge');
+      const container = document.getElementById('overviewModelsList');
+      badge.textContent = '拉取中...';
+      try {
+        const res = await fetch('/v1/models', {
+          headers: {
+            'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey)
+          }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const models = data.data || [];
+        badge.textContent = '已聚合 ' + models.length + ' 个模型';
+        container.innerHTML = '';
+        if (models.length === 0) {
+          container.innerHTML = '<span style="color:var(--text-muted); font-size:0.75rem;">暂无可用的模型映射</span>';
+          return;
+        }
+
+        models.forEach(m => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.style.cursor = 'pointer';
+          span.style.transition = 'all 0.15s';
+          span.title = '点击选用该模型并在演练场测试';
+          span.textContent = m.id;
+          span.onmouseover = () => { span.style.background = 'rgba(99,102,241,0.25)'; span.style.color = '#fff'; };
+          span.onmouseout = () => { span.style.background = ''; span.style.color = ''; };
+          span.onclick = () => {
+            const select = document.getElementById('chatModelSelect');
+            if (select) {
+              let exists = false;
+              for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === m.id) {
+                  select.selectedIndex = i;
+                  exists = true;
+                  break;
+                }
+              }
+              if (!exists) {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.id;
+                select.appendChild(opt);
+                select.value = m.id;
+              }
+            }
+            switchTab('tab-playground');
+            showToast('已选用模型: ' + m.id, 'success');
+          };
+          container.appendChild(span);
+        });
+      } catch (err) {
+        badge.textContent = '拉取失败';
+        container.innerHTML = '<span style="color:var(--danger); font-size:0.75rem;">模型拉取异常: ' + err.message + '</span>';
+      }
+    }
+
+    function loadOverviewData() {
+      const origin = window.location.origin;
+      const key = state.gatewayKey || '${defaultGatewayKey}';
+      
+      const adminUrl = document.getElementById('adminUrlText');
+      if (adminUrl) adminUrl.textContent = origin + '/admin';
+      const healthUrl = document.getElementById('healthUrlText');
+      if (healthUrl) healthUrl.textContent = origin + '/health';
+      const modelsUrl = document.getElementById('modelsUrlText');
+      if (modelsUrl) modelsUrl.textContent = origin + '/v1/models';
+      const chatUrl = document.getElementById('chatUrlText');
+      if (chatUrl) chatUrl.textContent = origin + '/v1/chat/completions';
+
+      const baseDisplay = document.getElementById('apiBaseUrlDisplay');
+      if (baseDisplay) baseDisplay.value = origin + '/v1';
+      const keyDisplay = document.getElementById('apiKeyDisplay');
+      if (keyDisplay) keyDisplay.value = key;
+
+      const preview = document.getElementById('curlCommandPreview');
+      if (preview) {
+        preview.textContent = 'curl ' + origin + '/v1/chat/completions \\\n' +
+          '  -H "Content-Type: application/json" \\\n' +
+          '  -H "Authorization: Bearer ' + key + '" \\\n' +
+          '  -d \'{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"你好"}]}\'';
+      }
+
+      fetchLiveHealth();
+      fetchLiveModels();
+    }
 
     function getAuthHeaders() {
       return {
@@ -1229,6 +1514,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     }
 
     // Initial load
+    loadOverviewData();
     loadChannels();
   </script>
 </body>

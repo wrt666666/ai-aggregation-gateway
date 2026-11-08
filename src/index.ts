@@ -107,6 +107,9 @@ const adminAuthMiddleware = async (c: Context, next: () => Promise<void>) => {
 };
 
 // Public SPA Dashboard Endpoints
+app.get('/', (c) => {
+  return c.html(renderAdminUI({ adminKey: ADMIN_KEY, gatewayKey: GATEWAY_API_KEY }));
+});
 app.get('/admin', (c) => {
   return c.html(renderAdminUI({ adminKey: ADMIN_KEY, gatewayKey: GATEWAY_API_KEY }));
 });
