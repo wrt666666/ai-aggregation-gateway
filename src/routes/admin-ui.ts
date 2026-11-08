@@ -996,8 +996,8 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
   </main>
 
   <!-- Add Channel Modal -->
-  <div id="addChannelModal" class="modal-backdrop">
-    <div class="modal-dialog">
+  <div id="addChannelModal" class="modal-backdrop" onclick="if(event.target === this) closeAddModal()">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
       <div class="card-header" style="margin-bottom:1rem;">
         <div class="card-title">➕ 动态注册新增渠道</div>
         <button class="btn btn-secondary btn-sm" onclick="closeAddModal()">✕</button>
@@ -1134,12 +1134,20 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
-        textArea.style.top = '-9999px';
-        textArea.style.left = '-9999px';
-        textArea.style.opacity = '0';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = '0';
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+        textArea.setAttribute('readonly', '');
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
+        textArea.setSelectionRange(0, textArea.value.length);
         const successful = document.execCommand('copy');
         document.body.removeChild(textArea);
         if (successful) {
@@ -1156,6 +1164,7 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeResponseModal();
+        closeAddModal();
       }
     });
 
@@ -1190,11 +1199,17 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
     function copyCurlExample() {
       const origin = window.location.origin;
       const key = state.gatewayKey || '${defaultGatewayKey}';
-      const body = '{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"Hello"}]}';
-      const cmd = 'curl ' + origin + '/v1/chat/completions \\\n' +
-        '  -H "Content-Type: application/json" \\\n' +
-        '  -H "Authorization: Bearer ' + key + '" \\\n' +
-        "  -d '" + body + "'";
+      const body = JSON.stringify({
+        model: 'gpt-4o',
+        stream: true,
+        messages: [{ role: 'user', content: 'Hello' }]
+      });
+      const cmd = [
+        'curl ' + origin + '/v1/chat/completions \\\\',
+        '  -H "Content-Type: application/json" \\\\',
+        '  -H "Authorization: Bearer ' + key + '" \\\\',
+        "  -d '" + body + "'"
+      ].join('\\n');
       copyText(cmd);
     }
 
@@ -1224,9 +1239,10 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
       const container = document.getElementById('overviewModelsList');
       badge.textContent = '拉取中...';
       try {
-        const res = await fetch('/v1/models', {
+        const token = state.gatewayKey || '${defaultGatewayKey}';
+        const res = await fetch('/v1/models?token=' + encodeURIComponent(token), {
           headers: {
-            'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey)
+            'Authorization': 'Bearer ' + token
           }
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1313,9 +1329,10 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
         } else if (type === 'models') {
           title.textContent = '🤖 聚合模型列表 API 实时响应';
           subtitle.textContent = 'GET ' + window.location.origin + '/v1/models';
-          const res = await fetch('/v1/models', {
+          const token = state.gatewayKey || '${defaultGatewayKey}';
+          const res = await fetch('/v1/models?token=' + encodeURIComponent(token), {
             headers: {
-              'Authorization': 'Bearer ' + (state.gatewayKey || state.adminKey)
+              'Authorization': 'Bearer ' + token
             }
           });
           const data = await res.json();
@@ -1387,11 +1404,17 @@ export function renderAdminUI(options: AdminUIOptions = {}): string {
 
       const preview = document.getElementById('curlCommandPreview');
       if (preview) {
-        const body = '{"model":"gpt-4o","stream":true,"messages":[{"role":"user","content":"你好"}]}';
-        preview.textContent = 'curl ' + origin + '/v1/chat/completions \\\n' +
-          '  -H "Content-Type: application/json" \\\n' +
-          '  -H "Authorization: Bearer ' + key + '" \\\n' +
-          "  -d '" + body + "'";
+        const body = JSON.stringify({
+          model: 'gpt-4o',
+          stream: true,
+          messages: [{ role: 'user', content: '你好' }]
+        });
+        preview.textContent = [
+          'curl ' + origin + '/v1/chat/completions \\\\',
+          '  -H "Content-Type: application/json" \\\\',
+          '  -H "Authorization: Bearer ' + key + '" \\\\',
+          "  -d '" + body + "'"
+        ].join('\\n');
       }
 
       fetchLiveHealth();

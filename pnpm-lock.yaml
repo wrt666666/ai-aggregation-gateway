@@ -213,6 +213,9 @@ importers:
       '@types/ssh2':
         specifier: ^1.15.6
         version: 1.15.6
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       ssh2:
         specifier: ^1.17.0
         version: 1.17.0

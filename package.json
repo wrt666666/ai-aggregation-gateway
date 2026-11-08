@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "bundle": "tsc && esbuild src/index.ts --bundle --platform=node --format=esm --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=dist/bundle.mjs",
     "start": "node dist/index.js",
     "test": "tsx test/verify.ts"
   },
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/node": "^26.6.6",
     "@types/ssh2": "^1.15.6",
+    "esbuild": "^0.28.2",
     "ssh2": "^1.17.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
