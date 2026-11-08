@@ -1,0 +1,22 @@
+services:
+  ai-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-aggregation-gateway:latest
+    container_name: ai-aggregation-gateway
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - GATEWAY_API_KEY=${GATEWAY_API_KEY:-sk-gateway-secret-key-123456}
+      - ADMIN_SECRET=${ADMIN_SECRET:-admin-secret-2026}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    env_file:
+      - path: .env
+        required: false

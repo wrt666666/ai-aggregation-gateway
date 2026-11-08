@@ -58,11 +58,85 @@ pnpm.cmd dev
 pnpm.cmd test
 ```
 
-### 5. 生产构建
+### 5. 生产构建与本地运行
 
 ```powershell
 pnpm.cmd run build
 pnpm.cmd start
+```
+
+## 🚀 服务器一键生产部署 (Server Deployment)
+
+### 方案 A：Docker Compose 一键部署（推荐）
+
+在服务器（如 Ubuntu / Debian / CentOS）上只需安装 Docker，执行以下三行命令即可：
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/wrt666666/ai-aggregation-gateway.git
+cd ai-aggregation-gateway
+
+# 2. 配置秘钥环境变量
+cp .env.example .env
+vim .env  # 填入您的 GATEWAY_API_KEY 与各上游模型 Key
+
+# 3. 后台启动容器
+docker compose up -d --build
+```
+
+查看实时运行日志：
+```bash
+docker compose logs -f
+```
+
+停止与更新：
+```bash
+git pull
+docker compose up -d --build
+```
+
+---
+
+### 方案 B：Linux VPS 原生 PM2 / Node 22 部署
+
+```bash
+# 1. 安装 Node.js 22 与 pnpm
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+npm install -g pnpm pm2
+
+# 2. 安装依赖并编译构建
+pnpm install --frozen-lockfile
+pnpm run build
+
+# 3. 使用 PM2 守护进程运行
+pm2 start dist/index.js --name "ai-gateway"
+pm2 save
+pm2 startup
+```
+
+---
+
+### 方案 C：Nginx 反向代理配置（支持 SSE 流式打字机）
+
+若前端使用域名访问并配置了 Nginx 反向代理，**必须关闭 Nginx 缓冲**，否则流式打字机会出现卡顿：
+
+参考本仓库提供的 `nginx.conf.example`：
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+
+    # 关键设置：支持 SSE 流式透传（关闭缓冲）
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 600s;
+    proxy_send_timeout 600s;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
 ```
 
 ## 许可证
