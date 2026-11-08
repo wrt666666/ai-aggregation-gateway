@@ -123,3 +123,51 @@ export interface ChannelConfig {
   maxFailures?: number;
   cooldownDurationMs?: number;
 }
+
+export interface MaskedChannelNode extends Omit<ChannelNode, 'apiKeys'> {
+  apiKeys: string[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: number;
+  channelId?: string;
+  model: string;
+  stream: boolean;
+  durationMs: number;
+  status: 'success' | 'failed';
+  statusCode: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  error?: string;
+}
+
+export interface MetricsSummary {
+  totalRequests: number;
+  totalSuccess: number;
+  totalFailed: number;
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
+  totalTokens: number;
+  averageDurationMs: number;
+}
+
+export interface VideoTaskItem {
+  id: string;
+  model: string;
+  prompt: string;
+  status: 'pending' | 'processing' | 'succeeded' | 'failed';
+  progress: number;
+  videoUrl?: string;
+  createdAt: number;
+  updatedAt: number;
+  error?: string;
+}
+
+export interface VideoGenerationRequest {
+  model?: string;
+  prompt: string;
+  aspect_ratio?: string;
+  duration_seconds?: number;
+}

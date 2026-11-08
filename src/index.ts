@@ -1,6 +1,7 @@
 /**
  * AI Gateway Main Entry Point (Hono Gateway)
- * Features: Auth, Channel Routing, Silent Failover, Anti-Half-Packet SSE, Protocol Adaptation
+ * Features: Auth, Channel Routing, Silent Failover, Anti-Half-Packet SSE, Protocol Adaptation,
+ *           SPA Admin Dashboard, Circular Audit Logging, and Async Video Generation
  */
 
 import 'dotenv/config';
@@ -11,7 +12,9 @@ import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { ChannelRouter } from './core/router.js';
 import { createStreamRelay } from './core/stream-relay.js';
-import type { ChannelConfig, ChatCompletionRequest } from './types/schema.js';
+import { stateStore } from './core/state-store.js';
+import { renderAdminUI } from './routes/admin-ui.js';
+import type { ChannelConfig, ChatCompletionRequest, VideoGenerationRequest } from './types/schema.js';
 
 const app = new Hono();
 
@@ -19,6 +22,7 @@ const app = new Hono();
 app.use('*', cors());
 
 const GATEWAY_API_KEY = process.env.GATEWAY_API_KEY || 'sk-gateway-secret-key-123456';
+const ADMIN_KEY = process.env.ADMIN_KEY || 'admin-secret-2026';
 const PORT = Number(process.env.PORT || 3000);
 
 // Initialize router with default upstream channels
@@ -55,13 +59,13 @@ const defaultChannels: ChannelConfig[] = [
 
 export const router = new ChannelRouter(defaultChannels);
 
-// Authentication Middleware
+// 1. Gateway Client Auth Middleware
 const authMiddleware = async (c: Context, next: () => Promise<void>) => {
   if (GATEWAY_API_KEY) {
     const authHeader = c.req.header('Authorization') || c.req.header('x-api-key');
     const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
 
-    if (!token || token !== GATEWAY_API_KEY) {
+    if (!token || (token !== GATEWAY_API_KEY && token !== ADMIN_KEY)) {
       return c.json(
         {
           error: {
@@ -77,10 +81,44 @@ const authMiddleware = async (c: Context, next: () => Promise<void>) => {
   await next();
 };
 
+// 2. Admin Security Auth Middleware (Supports X-Admin-Key and Bearer Token)
+const adminAuthMiddleware = async (c: Context, next: () => Promise<void>) => {
+  const adminKeyHeader = c.req.header('x-admin-key');
+  const authHeader = c.req.header('Authorization') || c.req.header('x-api-key');
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+
+  const isValid =
+    (adminKeyHeader && adminKeyHeader === ADMIN_KEY) ||
+    (token && (token === ADMIN_KEY || token === GATEWAY_API_KEY));
+
+  if (!isValid) {
+    return c.json(
+      {
+        error: {
+          message: 'Unauthorized: Invalid Admin Key or Gateway Key',
+          type: 'invalid_request_error',
+          code: 401,
+        },
+      },
+      401
+    );
+  }
+  await next();
+};
+
+// Public SPA Dashboard Endpoints
+app.get('/admin', (c) => {
+  return c.html(renderAdminUI({ adminKey: ADMIN_KEY, gatewayKey: GATEWAY_API_KEY }));
+});
+app.get('/admin/', (c) => c.redirect('/admin'));
+
+// Apply middlewares to protected API path scopes
 app.use('/v1/*', authMiddleware);
 app.use('/chat/*', authMiddleware);
 app.use('/models/*', authMiddleware);
-app.use('/admin/*', authMiddleware);
+app.use('/api/admin/*', adminAuthMiddleware);
+app.use('/admin/channels', adminAuthMiddleware);
+app.use('/admin/channels/*', adminAuthMiddleware);
 
 // Health & Monitoring (Public)
 app.get('/health', (c) => {
@@ -169,16 +207,59 @@ const handleModelDetail = (c: Context) => {
 app.get('/v1/models/:model', handleModelDetail);
 app.get('/models/:model', handleModelDetail);
 
-// Admin channel registration & status
+// Admin Management APIs (/api/admin/*)
+app.get('/api/admin/channels', (c) => {
+  return c.json({ channels: router.listMaskedChannels() });
+});
+
+app.post('/api/admin/channels', async (c) => {
+  try {
+    const body = await c.req.json<ChannelConfig>();
+    if (!body.id || !body.endpoint || !body.apiKeys) {
+      return c.json({ error: 'Missing required fields: id, endpoint, apiKeys' }, 400);
+    }
+    const node = router.addChannel(body);
+    return c.json({ success: true, channel: node });
+  } catch (err: any) {
+    return c.json({ error: err?.message || 'Failed to add channel' }, 400);
+  }
+});
+
+app.post('/api/admin/channels/:id/toggle', (c) => {
+  const id = c.req.param('id');
+  const node = router.toggleChannelStatus(id);
+  if (!node) {
+    return c.json({ error: `Channel with id '${id}' not found` }, 404);
+  }
+  return c.json({ success: true, channel: node });
+});
+
+app.delete('/api/admin/channels/:id', (c) => {
+  const id = c.req.param('id');
+  const deleted = router.deleteChannel(id);
+  if (!deleted) {
+    return c.json({ error: `Channel with id '${id}' not found` }, 404);
+  }
+  return c.json({ success: true, message: `Channel '${id}' removed` });
+});
+
+app.get('/api/admin/metrics', (c) => {
+  return c.json(stateStore.getMetrics());
+});
+
+app.get('/api/admin/logs', (c) => {
+  const limit = Number(c.req.query('limit') || 50);
+  return c.json({ logs: stateStore.getLogs(limit) });
+});
+
+app.get('/api/admin/videos', (c) => {
+  return c.json({ tasks: stateStore.listVideoTasks() });
+});
+
+// Legacy /admin/channels endpoints
 app.get('/admin/channels', (c) => {
   const showKeys = c.req.query('showKeys') === 'true';
-  const channels = router.getAllChannels().map((ch) => ({
-    ...ch,
-    apiKeys: showKeys
-      ? ch.apiKeys
-      : ch.apiKeys.map((k) => (k.length > 8 ? `${k.slice(0, 4)}***${k.slice(-4)}` : '***')),
-  }));
-
+  const channels = showKeys ? router.getAllChannels() : router.listMaskedChannels();
   return c.json({ channels });
 });
 
@@ -213,8 +294,32 @@ app.post('/admin/channels/:id/reset', (c) => {
   return c.json({ success: true, message: `Channel '${id}' reset to healthy` });
 });
 
-// Core Chat Completion Gateway Endpoint with Silent Failover
+// Asynchronous Video Generation Endpoints
+app.post('/v1/videos/generations', async (c) => {
+  try {
+    const body = await c.req.json<VideoGenerationRequest>();
+    if (!body || !body.prompt) {
+      return c.json({ error: { message: 'Missing required field: prompt', code: 400 } }, 400);
+    }
+    const task = stateStore.createVideoTask(body.model || 'sora-1.0', body.prompt);
+    return c.json(task, 202);
+  } catch (err: any) {
+    return c.json({ error: { message: err?.message || 'Invalid request', code: 400 } }, 400);
+  }
+});
+
+app.get('/v1/videos/tasks/:taskId', (c) => {
+  const taskId = c.req.param('taskId');
+  const task = stateStore.getVideoTask(taskId);
+  if (!task) {
+    return c.json({ error: { message: `Video task '${taskId}' not found`, code: 404 } }, 404);
+  }
+  return c.json(task);
+});
+
+// Core Chat Completion Gateway Endpoint with Silent Failover & Metrics Settlement
 const handleChatCompletion = async (c: Context) => {
+  const startTime = Date.now();
   let reqBody: ChatCompletionRequest;
   try {
     reqBody = await c.req.json<ChatCompletionRequest>();
@@ -315,6 +420,20 @@ const handleChatCompletion = async (c: Context) => {
           promptText: promptCombinedText,
           includeUsage: reqBody.stream_options?.include_usage,
           onUsageSettled: (usage) => {
+            const durationMs = Date.now() - startTime;
+            stateStore.appendLog({
+              id: `chatcmpl-${Date.now()}`,
+              timestamp: Date.now(),
+              channelId: candidate.channel.id,
+              model: reqBody.model,
+              stream: true,
+              durationMs,
+              status: 'success',
+              statusCode: 200,
+              promptTokens: usage.prompt_tokens,
+              completionTokens: usage.completion_tokens,
+              totalTokens: usage.total_tokens,
+            });
             console.log(
               `[Gateway Stream] Settled tokens for ${reqBody.model} via ${candidate.channel.id}:`,
               usage
@@ -338,6 +457,21 @@ const handleChatCompletion = async (c: Context) => {
       const upstreamJson = await upstreamResponse.json();
       const standardResponse = router.transformResponse(candidate.channel, upstreamJson, reqBody.model);
 
+      const durationMs = Date.now() - startTime;
+      stateStore.appendLog({
+        id: standardResponse.id,
+        timestamp: Date.now(),
+        channelId: candidate.channel.id,
+        model: reqBody.model,
+        stream: false,
+        durationMs,
+        status: 'success',
+        statusCode: 200,
+        promptTokens: standardResponse.usage?.prompt_tokens ?? 0,
+        completionTokens: standardResponse.usage?.completion_tokens ?? 0,
+        totalTokens: standardResponse.usage?.total_tokens ?? 0,
+      });
+
       return c.json(standardResponse, 200, {
         'x-gateway-channel': candidate.channel.id,
       });
@@ -355,6 +489,22 @@ const handleChatCompletion = async (c: Context) => {
 
   // All eligible channels were tried or cooling
   const statusCode = triedChannelIds.size > 0 ? 502 : 503;
+  const durationMs = Date.now() - startTime;
+  stateStore.appendLog({
+    id: `chatcmpl-err-${Date.now()}`,
+    timestamp: Date.now(),
+    channelId: undefined,
+    model: reqBody.model,
+    stream: Boolean(reqBody.stream),
+    durationMs,
+    status: 'failed',
+    statusCode,
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    error: lastError ? JSON.stringify(lastError) : 'All channels unavailable',
+  });
+
   return c.json(
     {
       error: {
@@ -382,6 +532,7 @@ export function startServer(port = PORT) {
     port,
   });
   console.log(`AI Gateway listening on http://localhost:${port}`);
+  console.log(`Admin Dashboard available on http://localhost:${port}/admin`);
   return server;
 }
 

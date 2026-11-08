@@ -7,7 +7,8 @@ import type {
   ChannelNode,
   ChatCompletionRequest,
   ChatCompletionResponse,
-  ChatMessage
+  ChatMessage,
+  MaskedChannelNode,
 } from '../types/schema.js';
 
 export interface RouteCandidate {
@@ -67,6 +68,49 @@ export class ChannelRouter {
 
   public getAllChannels(): ChannelNode[] {
     return Array.from(this.channels.values());
+  }
+
+  /**
+   * List channels with API keys masked (preserving first 4 and last 4 chars)
+   */
+  public listMaskedChannels(): MaskedChannelNode[] {
+    return Array.from(this.channels.values()).map((ch) => ({
+      ...ch,
+      apiKeys: ch.apiKeys.map((k) =>
+        k.length > 8 ? `${k.slice(0, 4)}***${k.slice(-4)}` : '***'
+      ),
+    }));
+  }
+
+  /**
+   * Toggle channel active status (healthy <-> dead) or reset cooling/dead status
+   */
+  public toggleChannelStatus(id: string): ChannelNode | null {
+    const ch = this.channels.get(id);
+    if (!ch) return null;
+
+    if (ch.status === 'healthy') {
+      ch.status = 'dead';
+    } else {
+      ch.status = 'healthy';
+      ch.consecutiveFailures = 0;
+      ch.cooldownUntil = 0;
+    }
+    return ch;
+  }
+
+  /**
+   * Dynamically add or update a channel
+   */
+  public addChannel(config: ChannelConfig): ChannelNode {
+    return this.registerChannel(config);
+  }
+
+  /**
+   * Dynamically delete a channel
+   */
+  public deleteChannel(id: string): boolean {
+    return this.removeChannel(id);
   }
 
   public removeChannel(id: string): boolean {
